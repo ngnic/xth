@@ -40,3 +40,5 @@ These are the third party libraries that are used. A brief description is includ
 * [crypto](https://github.com/golang/crypto) - provide bcrypt support for password hashing
 * [pq](https://github.com/lib/pq) - postgres driver
 * [uuid](https://github.com/google/uuid) - used to generate API keys, currently only being used for testing.
+* [mockery] (https://github.com/vektra/mockery) - automatic mock generation for testing
+* [migrate] (https://github.com/golang-migrate/migrate) - schema migrations
