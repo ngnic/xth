@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  db:
+    image: postgres 
+    container_name: db
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - main 
+    environment:
+      - POSTGRES_DB=main
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+  app:
+    build: .
+    container_name: app
+    expose:
+      - 8080
+    ports:
+      - 8080:8080
+    environment:
+      - DB_URL=postgres://postgres:postgres@db:5432/main?sslmode=disable
+    command: /opt/app/scripts/deploy.sh
+    depends_on:
+      - db
+    networks:
+      - main
+networks:
+  main:
+    driver: bridge
