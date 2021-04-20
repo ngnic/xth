@@ -3,14 +3,16 @@ package server
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"xendit-takehome/github/controllers"
 	"xendit-takehome/github/middleware"
 	"xendit-takehome/github/repositories"
 
-	"github.com/golang-migrate/migrate"
-	"github.com/golang-migrate/migrate/database/postgres"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -37,9 +39,10 @@ func loadSecretsFromParamStore() {
 
 	ssmsvc := ssm.New(sess, aws.NewConfig().WithRegion(region))
 
+	environment := os.Getenv("ENVIRONMENT")
 	withDecryption := true
 	params, err := ssmsvc.GetParameters(&ssm.GetParametersInput{
-		Names:          []*string{aws.String("DB_URL")},
+		Names:          []*string{aws.String(fmt.Sprintf("/%s/app/DB_URL", environment))},
 		WithDecryption: &withDecryption,
 	})
 	if err != nil {
@@ -49,7 +52,7 @@ func loadSecretsFromParamStore() {
 	for _, param := range params.Parameters {
 		name := aws.StringValue(param.Name)
 		value := aws.StringValue(param.Value)
-		key := name[strings.LastIndex(name, "/"):]
+		key := name[strings.LastIndex(name, "/")+1:]
 		os.Setenv(key, value)
 	}
 }
@@ -61,20 +64,26 @@ func migrateSchema(dbType string, db *sql.DB) {
 		panic(err)
 	}
 
-	migrateInstance, err := migrate.NewWithDatabaseInstance(migrationsDir, dbType, driver)
+	fsrc, err := (&file.File{}).Open(migrationsDir)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Migrating Schema")
-	if err := migrateInstance.Up(); err != nil {
+	migrateInstance, err := migrate.NewWithInstance("file", fsrc, dbType, driver)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := migrateInstance.Up(); err != nil && err != migrate.ErrNoChange {
 		panic(err)
 	}
 }
 
 func NewApp() App {
 	if strings.ToLower(os.Getenv("LOAD_SECRETS_FROM_PARAMSTORE")) == "true" {
+		log.Println("Loading params from paramstore")
 		loadSecretsFromParamStore()
+		log.Println("Params loaded successfully")
 	}
 
 	dbUrl := os.Getenv("DB_URL")
@@ -90,7 +99,9 @@ func NewApp() App {
 	}
 
 	if strings.ToLower(os.Getenv("MIGRATE_DATABASE")) != "false" {
+		log.Println("Performing migrations")
 		migrateSchema(dbType, db.DB)
+		log.Println("Migrations were performed successfully")
 	}
 
 	router := gin.Default()
