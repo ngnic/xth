@@ -1,4 +1,36 @@
- ## Schema
+## Demo
+___
+
+There's a demo hosted currently hosted at the following url:
+```
+https://elbwgrs.space
+```
+
+There's some data that has already been preseeded. To access the modification related routes, you'll need an api key. Here's one:
+```
+UY94nF1VsfMZp+Uv
+```
+
+
+## Endpoints
+___
+
+All modification routes are protected. To create or delete comments, you'll need to provide the api key in the Authorisation header with the bearer prefix like so:
+
+```
+Authorization: Bearer <api_key>
+```
+
+POST /org/:org/comments/\
+- Creates a comment scoped to an organisation.
+GET /org/:org/comments/\
+- Returns all comments scoped to an organisation.
+GET /org/:org/members/\
+- Returns the list of members in an organisation ordered by the number of followers in descending order.
+DELETE /org/:org/comments/\
+- Deletes all comments under an organisation.
+
+## Schema
 ___
 ### Organisations
 Stores the organisations.\
