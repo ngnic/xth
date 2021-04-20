@@ -1,0 +1,67 @@
+version: "3"
+
+services:
+  proxy:
+    image: "traefik:v2.4"
+    container_name: proxy 
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:443"
+      - "--certificatesresolvers.defaultresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.defaultresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.defaultresolver.acme.email=ng.niccc+xendit-takehom@gmail.com"
+      - "--certificatesresolvers.defaultresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
+    networks:
+      - main
+  members:
+    image: 461960015384.dkr.ecr.ap-southeast-1.amazonaws.com/github:latest
+    container_name: members
+    expose:
+      - 8081 
+    environment:
+      - APP_PORT=8081
+      - ENVIRONMENT=$ENVIRONMENT
+      - LOAD_SECRETS_FROM_PARAMSTORE=$LOAD_SECRETS_FROM_PARAMSTORE
+      - MIGRATIONS_DIR=$MIGRATIONS_DIR
+      - GIN_MODE=$GIN_MODE
+    command: /opt/app/scripts/deploy.sh
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.members.rule=Host(`elbwgrs.space`) && PathPrefix(`/org/{org:\\w+}/members/`)"
+      - "traefik.http.routers.members.entrypoints=web"
+      - "traefik.http.routers.members.tls.certresolver=defaultresolver"
+      - "traefik.http.routers.members.service=members-service"
+      - "traefik.http.services.members-service.loadbalancer.server.port=8081"
+    networks:
+      - main
+  comments:
+    image: 461960015384.dkr.ecr.ap-southeast-1.amazonaws.com/github:latest
+    container_name: comments
+    expose:
+      - 8082 
+    environment:
+      - APP_PORT=8082
+      - ENVIRONMENT=$ENVIRONMENT
+      - LOAD_SECRETS_FROM_PARAMSTORE=$LOAD_SECRETS_FROM_PARAMSTORE
+      - MIGRATIONS_DIR=$MIGRATIONS_DIR
+      - GIN_MODE=$GIN_MODE
+    command: /opt/app/scripts/deploy.sh
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.comments.rule=Host(`elbwgrs.space`) && PathPrefix(`/org/{org:\\w+}/comments/`)"
+      - "traefik.http.routers.comments.entrypoints=web"
+      - "traefik.http.routers.comments.tls.certresolver=defaultresolver"
+      - "traefik.http.routers.comments.service=comments-service"
+      - "traefik.http.services.comments-service.loadbalancer.server.port=8082"
+    networks:
+      - main
+networks:
+  main:
+    driver: bridge
