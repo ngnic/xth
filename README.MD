@@ -1,9 +1,6 @@
-
-# Project Structure
-
-## Schema
+ ## Schema
 ___
-## Organisations
+### Organisations
 Stores the organisations.\
 Has the following columns:
 * id
@@ -89,7 +86,7 @@ Has the following columns:
 * The primary key is a composite of (follower_id, followee_id). Is unique.
 * Has check constraint (followee_id != follower_id). This prevents a scenario where a user follows themselves.
 
-## Folder Structure
+## Project Structure
 ___
 * controllers 
     * Contains the endpoints and routing.
@@ -131,3 +128,53 @@ These are the third party libraries that are used. A brief description is includ
 * [uuid](https://github.com/google/uuid) - used to generate API keys, currently only being used for testing.
 * [mockery] (https://github.com/vektra/mockery) - automatic mock generation for testing
 * [migrate] (https://github.com/golang-migrate/migrate) - schema migrations
+
+## Infrastructure
+___
+
+Currently the application is being deployed in an elastic beanstalk through a docker compose file. In there, there's 3 components:
+1. A Proxy, we're using Traefik in this case.
+2. A members app
+3. A comments app
+To speed up the existing development process, the identical application is used in both services. Path based routing is employed on the proxy end to route the traffic to the relevant services. The proxy also handles TLS termination.
+
+The applications are configured through environment variables that are being set through 2 avenues. Elastic beanstalk environment settings for options that aren't secrets. Secrets are stored on AWS SSM parameter store and encrypted with KMS. The instance profiles have the relevant permissions to fetch them and it is done during start up. The database used is Postgres hosted on RDS.
+
+## How to deploy to Production
+___
+
+First, build and tag the image. We're using the a stable tag for convenience, i.e latest.
+```
+docker build -t 461960015384.dkr.ecr.ap-southeast-1.amazonaws.com/github:latest .
+```
+We're using ECR to store the images.
+
+Then run the `create-app-bundle.sh` script in scripts like so.
+```
+./scripts/create-app-bundle.sh
+```
+The scripts does the following:
+1. Copy production compose file into a tmp folder.
+2. Zips it up. The produced zip file will have the current commit hash.
+3. Uploads it to S3.
+4. Registers the version with the App created on elastic beanstalk.
+
+After the bundle is uploaded. Login to elastic beanstalk, find the commit hash of the version you want to deploy and deploy it to the production environment.
+
+## How to run the tests
+___
+
+Inside the `docker-compose.yml` file, there's a service named `test-db`. Start `test-db` like so:
+```
+docker-compose up -d test-db
+```
+
+Run the migrations like so:
+```
+migrate -path migrations -database "postgres://postgres:postgres@localhost:5433/main_test?sslmode=disable" up 
+```
+
+To run the testsuite, run this command:
+```
+DB_URL="postgres://postgres:postgres@localhost:5433/main_test?sslmode=disable" go test -v ./...  
+```
