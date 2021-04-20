@@ -3,8 +3,9 @@ module xendit-takehome/github
 go 1.16
 
 require (
+	github.com/aws/aws-sdk-go v1.38.22
 	github.com/gin-gonic/gin v1.7.1
-	github.com/go-playground/assert/v2 v2.0.1
+	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/google/uuid v1.2.0
 	github.com/jmoiron/sqlx v1.3.3
 	github.com/kr/pretty v0.1.0 // indirect
