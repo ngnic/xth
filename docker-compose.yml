@@ -30,6 +30,19 @@ services:
       - db
     networks:
       - main
+  test-db:
+    image: postgres 
+    container_name: test-db
+    expose:
+      - 5433
+    ports:
+      - 5433:5432
+    networks:
+      - main 
+    environment:
+      - POSTGRES_DB=main_test
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
 networks:
   main:
     driver: bridge
