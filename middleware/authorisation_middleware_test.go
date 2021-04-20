@@ -10,6 +10,7 @@ import (
 	mocks "xendit-takehome/github/mocks/repositories"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +18,7 @@ func TestAuthorisationMiddleware(t *testing.T) {
 	mockUserRepo := &mocks.UserRepository{}
 	mockUserRepo.On("GetUser", "123").Return(entities.UserOrganisation{
 		Username:          "A",
-		OrganisationNames: []string{"A"},
+		OrganisationNames: pq.StringArray{"A"},
 	}, nil)
 	middleware := middleware.ApiKeyAuthorisation(mockUserRepo)
 	gin.SetMode(gin.TestMode)
@@ -27,6 +28,8 @@ func TestAuthorisationMiddleware(t *testing.T) {
 	router.Use(middleware, func(ctx *gin.Context) {
 		username := ctx.GetString("username")
 		organisationNames := ctx.GetStringSlice("organisations")
+		assert.Equal(t, username, "A")
+		assert.Equal(t, organisationNames, []string{"A"})
 		ctx.JSON(http.StatusOK, gin.H{"username": username, "organisations": organisationNames})
 	})
 

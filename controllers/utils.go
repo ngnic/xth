@@ -13,13 +13,13 @@ var (
 
 func checkUserInOrg(ctx *gin.Context) (string, error) {
 	requestedOrg := ctx.Param("org")
-	userOrganisations, exists := ctx.Get("organisations")
-	if !exists {
+	userOrganisations := ctx.GetStringSlice("organisations")
+	if userOrganisations == nil {
 		return "", ErrMisconfiguredAuthorisation
 	}
 
 	hasMatchingOrg := false
-	for _, org := range userOrganisations.([]string) {
+	for _, org := range userOrganisations {
 		if org == requestedOrg {
 			hasMatchingOrg = true
 			break

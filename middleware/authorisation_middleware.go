@@ -33,8 +33,12 @@ func ApiKeyAuthorisation(userRepo repositories.UserRepository) gin.HandlerFunc {
 			return
 		}
 
+		organisations := []string{}
+		for _, org := range member.OrganisationNames {
+			organisations = append(organisations, org)
+		}
 		ctx.Set("username", member.Username)
-		ctx.Set("organisations", member.OrganisationNames)
+		ctx.Set("organisations", organisations)
 		ctx.Next()
 	}
 }
