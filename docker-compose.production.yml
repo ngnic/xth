@@ -13,7 +13,7 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.to=web-secure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--certificatesresolvers.defaultresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.defaultresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.defaultresolver.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.defaultresolver.acme.email=ng.niccc+xendit-takehom@gmail.com"
       - "--certificatesresolvers.defaultresolver.acme.storage=/letsencrypt/acme.json"
     ports:
