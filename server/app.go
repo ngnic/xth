@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"xendit-takehome/github/controllers"
@@ -14,13 +15,16 @@ import (
 )
 
 type App struct {
-	router *gin.Engine
+	router  *gin.Engine
+	appPort string
 }
 
 func NewApp() App {
 	dbUrl := os.Getenv("DB_URL")
 	dbType := dbUrl[:strings.Index(dbUrl, ":")]
 	db := sqlx.MustConnect(dbType, dbUrl)
+
+	appPort := os.Getenv("APP_PORT")
 
 	router := gin.Default()
 	orgRepo := repositories.NewOrganisationDBRepository(db)
@@ -29,10 +33,11 @@ func NewApp() App {
 	controllers.SetupRoutes(router, orgRepo, authMiddleware)
 
 	return App{
-		router: router,
+		router:  router,
+		appPort: appPort,
 	}
 }
 
 func (app *App) Run() {
-	app.router.Run(":8080")
+	app.router.Run(fmt.Sprintf(":%s", app.appPort))
 }
