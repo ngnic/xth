@@ -8,13 +8,17 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:443"
+      - "--entrypoints.web-secure.address=:443"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=web-secure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--certificatesresolvers.defaultresolver.acme.tlschallenge=true"
       - "--certificatesresolvers.defaultresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.defaultresolver.acme.email=ng.niccc+xendit-takehom@gmail.com"
       - "--certificatesresolvers.defaultresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       - "443:443"
+      - "80:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./letsencrypt:/letsencrypt"
@@ -35,7 +39,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.members.rule=Host(`elbwgrs.space`) && PathPrefix(`/org/{org:\\w+}/members/`)"
-      - "traefik.http.routers.members.entrypoints=web"
+      - "traefik.http.routers.members.entrypoints=web-secure"
       - "traefik.http.routers.members.tls.certresolver=defaultresolver"
       - "traefik.http.routers.members.service=members-service"
       - "traefik.http.services.members-service.loadbalancer.server.port=8081"
@@ -56,7 +60,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.comments.rule=Host(`elbwgrs.space`) && PathPrefix(`/org/{org:\\w+}/comments/`)"
-      - "traefik.http.routers.comments.entrypoints=web"
+      - "traefik.http.routers.comments.entrypoints=web-secure"
       - "traefik.http.routers.comments.tls.certresolver=defaultresolver"
       - "traefik.http.routers.comments.service=comments-service"
       - "traefik.http.services.comments-service.loadbalancer.server.port=8082"
