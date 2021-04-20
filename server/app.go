@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"strings"
@@ -9,9 +10,8 @@ import (
 	"xendit-takehome/github/repositories"
 
 	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/lib/pq"
-
-	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -54,14 +54,20 @@ func loadSecretsFromParamStore() {
 	}
 }
 
-func migrateSchema(dbType string, db *sqlx.DB) {
+func migrateSchema(dbType string, db *sql.DB) {
 	migrationsDir := os.Getenv("MIGRATIONS_DIR")
-	m, err := migrate.NewWithDatabaseInstance(migrationsDir, dbType, db)
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	if err := m.Up(); err != nil {
+	migrateInstance, err := migrate.NewWithDatabaseInstance(migrationsDir, dbType, driver)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Migrating Schema")
+	if err := migrateInstance.Up(); err != nil {
 		panic(err)
 	}
 }
@@ -84,7 +90,7 @@ func NewApp() App {
 	}
 
 	if strings.ToLower(os.Getenv("MIGRATE_DATABASE")) != "false" {
-		migrateSchema(dbType, db)
+		migrateSchema(dbType, db.DB)
 	}
 
 	router := gin.Default()
