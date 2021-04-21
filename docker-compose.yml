@@ -24,8 +24,10 @@ services:
     ports:
       - 8080:8080
     environment:
+      - APP_PORT=8080
+      - MIGRATIONS_DIR=file:///opt/app/migrations
       - DB_URL=postgres://postgres:postgres@db:5432/main?sslmode=disable
-    command: /opt/app/scripts/deploy.sh
+    command: ["/opt/app/scripts/wait-for-it.sh", "/opt/app/github-app"]
     depends_on:
       - db
     networks:
