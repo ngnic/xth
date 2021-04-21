@@ -210,3 +210,13 @@ To run the testsuite, run this command:
 ```
 DB_URL="postgres://postgres:postgres@localhost:5433/main_test?sslmode=disable" go test -v ./...  
 ```
+
+## How to run the server locally 
+___
+
+Inside the `docker-compose.yml` file, there's 2 services `app` and `db`. `app` is the application server and `db` is the database of the local test environment.
+
+To launch them, run this command:
+```
+docker-compose up -d app db 
+```
